@@ -22,7 +22,6 @@ export default function AboutUs() {
 
 				<Stack
 					direction={{ xs: 'column', sm: 'row' }}
-					// spacing={{ xs: 1, sm: 0, md: 4 }}
 					gap={2}
 					sx={{ flexWrap: 'wrap' }}
 					justifyContent='center'

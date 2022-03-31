@@ -4,8 +4,8 @@ import request from 'superagent';
 import { Button } from '@mui/material';
 import { removeFavorite } from './Utils.js';
 
-const URL = 'https://cryptic-dusk-44349.herokuapp.com';
-// const URL = 'http://localhost:7890'
+//const URL = 'https://cryptic-dusk-44349.herokuapp.com';
+const URL = 'http://localhost:7890';
 
 export default function Favorites({ token }) {
 	// state = {

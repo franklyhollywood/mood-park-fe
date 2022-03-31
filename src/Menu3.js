@@ -13,6 +13,7 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useHistory } from 'react-router-dom';
 import Link from '@mui/material/Link';
+import { Link as RouterLink } from 'react-router-dom';
 
 const pages = ['Home', 'Login', 'Signup', 'About Us'];
 
@@ -91,6 +92,14 @@ const Menu3 = ({ logout, token }) => {
 									</Link>
 								</Typography>
 							</MenuItem>
+							<MenuItem onClick={handleCloseNavMenu}>
+								<Typography textAlign='center'>
+									{/* TODO make all 'href' links 'to' links */}
+									<Link component={RouterLink} to='/parks' underline='none'>
+										PARKS
+									</Link>
+								</Typography>
+							</MenuItem>
 							{!token && (
 								<MenuItem onClick={handleCloseNavMenu}>
 									<Typography textAlign='center'>
@@ -106,6 +115,17 @@ const Menu3 = ({ logout, token }) => {
 										<Link href={'/sign-up'} underline='none'>
 											SIGN UP
 										</Link>
+									</Typography>
+								</MenuItem>
+							)}
+							{token && (
+								<MenuItem onClick={handleCloseNavMenu}>
+									<Typography
+										sx={{ color: 'primary.main' }}
+										onClick={logout}
+										textAlign='center'
+									>
+										LOGOUT
 									</Typography>
 								</MenuItem>
 							)}
@@ -138,6 +158,15 @@ const Menu3 = ({ logout, token }) => {
 								<Typography textAlign='center'>HOME</Typography>
 							</MenuItem>
 						</Button>
+						<Button
+							href={'/parks'}
+							onClick={handleCloseNavMenu}
+							sx={{ my: 2, color: 'white', display: 'flex' }}
+						>
+							<MenuItem onClick={handleCloseNavMenu}>
+								<Typography textAlign='center'>PARKS</Typography>
+							</MenuItem>
+						</Button>
 						{!token && (
 							<Button
 								href={'/login'}
@@ -160,6 +189,13 @@ const Menu3 = ({ logout, token }) => {
 								</MenuItem>
 							</Button>
 						)}
+						{token && (
+							<MenuItem onClick={handleCloseNavMenu}>
+								<Typography onClick={logout} textAlign='center'>
+									LOGOUT
+								</Typography>
+							</MenuItem>
+						)}
 						<Button
 							href={'/aboutus'}
 							onClick={handleCloseNavMenu}
@@ -172,46 +208,6 @@ const Menu3 = ({ logout, token }) => {
 						</Button>
 						{/* ))} */}
 					</Box>
-					{token && (
-						<Box sx={{ flexGrow: 0 }}>
-							<Tooltip title='Open settings'>
-								<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-									<Avatar
-										alt='Park with sunglight'
-										src='https://images.unsplash.com/photo-1568480289356-5a75d0fd47fc?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'
-									/>
-								</IconButton>
-							</Tooltip>
-
-							<Menu
-								sx={{ mt: '45px' }}
-								id='menu-appbar'
-								anchorEl={anchorElUser}
-								anchorOrigin={{
-									vertical: 'top',
-									horizontal: 'right',
-								}}
-								keepMounted
-								transformOrigin={{
-									vertical: 'top',
-									horizontal: 'right',
-								}}
-								open={Boolean(anchorElUser)}
-								onClose={handleCloseUserMenu}
-							>
-								<MenuItem onClick={handleCloseUserMenu}>
-									<Typography onClick={handleFavoriteNav} textAlign='center'>
-										Favorites
-									</Typography>
-								</MenuItem>
-								<MenuItem onClick={handleCloseUserMenu}>
-									<Typography onClick={logout} textAlign='center'>
-										Logout
-									</Typography>
-								</MenuItem>
-							</Menu>
-						</Box>
-					)}
 				</Toolbar>
 			</Container>
 		</AppBar>

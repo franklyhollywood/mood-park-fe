@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import request from 'superagent';
 // import { Link } from 'react-router-dom'
 import { isFavorite } from './Utils.js';
-
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
@@ -11,19 +11,20 @@ import CardActionArea from '@mui/material/CardActionArea';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import { Grid, Tooltip } from '@mui/material';
+import { Grid, Link, Tooltip } from '@mui/material';
 import { Button } from '@mui/material';
 import { TextField } from '@mui/material';
 import { removeFavorite } from './Utils.js';
 import ButtonGroup from '@mui/material/ButtonGroup';
-// import DetailPage from './DetailPage.js';
-// import './HomePage.css';
 import Spinner from './Spinner.js';
+import { red } from '@mui/material/colors';
+import { usePagination } from './PaginationContext.jsx';
+import { Link as RouterLink } from 'react-router-dom';
 
-const URL = 'https://cryptic-dusk-44349.herokuapp.com';
-// const URL = 'http://localhost:7890'
+// const URL = 'https://cryptic-dusk-44349.herokuapp.com';
+const URL = 'http://localhost:7890';
 
-export default function HomePage({ token }) {
+export default function Parks({ token }) {
 	// state = {
 	// 	parks: [],
 	// 	SearchPark: '',
@@ -36,9 +37,12 @@ export default function HomePage({ token }) {
 	const [parks, setParks] = useState([]);
 	const [searchPark, setSearchPark] = useState('');
 	const [favorites, setFavorites] = useState([]);
+	//For button view on parks page: favorites or all parks
+	const [favoriteView, setFavoriteView] = useState(false);
 	const [parkCode, setParkCode] = useState('');
-	const [start, setStart] = useState(0);
+	// const [start, setStart] = useState(0);
 	const [isLoading, setIsLoading] = useState(false);
+	const { page, setPage } = usePagination();
 
 	const submitPark = async (e) => {
 		e.preventDefault();
@@ -83,7 +87,10 @@ export default function HomePage({ token }) {
 			// const token = this.props.token;
 			const response = await request.get(
 				// `${URL}/parks?start=${this.state.start}`
-				`${URL}/parks?start=${start}`
+				`${URL}/parks?start=${page * 20}`
+				// `https://developer.nps.gov/api/v1/parks?limit=20&start=${
+				// 	page * 20
+				// }&api_key=FjbYuojCE0MpnrnD7PgAu9duwdWqxbSMT5eaWEGj`
 			);
 			if (token) {
 				const favs = await request
@@ -93,63 +100,88 @@ export default function HomePage({ token }) {
 				setFavorites(favs.body);
 			}
 			// this.setState({ parks: response.body.data, isLoading: false });
-			setParks(response.body.data);
+			if (favoriteView) {
+				const allParks = await request.get(
+					`https://developer.nps.gov/api/v1/parks?limit=500&api_key=FjbYuojCE0MpnrnD7PgAu9duwdWqxbSMT5eaWEGj`
+				);
+				setParks(
+					allParks.body.data.filter((park) => isFavorite(park, favorites))
+				);
+			} else {
+				setParks(response.body.data);
+			}
 			setIsLoading(false);
 		};
 		getParks();
-	}, [start, token]);
+	}, [page, token, favoriteView]);
 
 	const nextTwenty = () => {
 		// await this.setState({ start: this.state.start + 20 });
-		setStart(start + 20);
+		setPage((prevState) => prevState + 1);
 		// this.componentDidMount();
 		// await getParks();
 	};
 
 	const previousTwenty = () => {
 		// await this.setState({ start: this.state.start - 20 });
-		setStart(start - 20);
+		setPage((prevState) => prevState - 1);
 		// this.componentDidMount();
 		// await getParks();
 	};
 
 	const firstTwenty = () => {
 		// await this.setState({ start: (this.state.start = 0) });
-		setStart(0);
+		setPage(0);
 		// this.componentDidMount();
 		// await getParks();
 	};
 
+	const handleFavoriteView = () => {
+		setFavoriteView((prevState) => !prevState);
+	};
+
+	const favoriteHeart = (park) => (
+		<Box sx={{ position: 'absolute', right: '-10px', top: '250px' }}>
+			<CardActions>
+				<Tooltip title='Add/Remove Favorites' placement='right'>
+					{isFavorite(park, favorites) ? (
+						<IconButton
+							size='large'
+							color='error'
+							aria-label='add to favorites'
+							onClick={() => handleRemove(park.parkCode)}
+						>
+							<FavoriteIcon />
+						</IconButton>
+					) : (
+						<IconButton
+							size='large'
+							aria-label='add to favorites'
+							onClick={() => handleFavorite(park)}
+						>
+							<FavoriteIcon />
+						</IconButton>
+					)}
+				</Tooltip>
+			</CardActions>
+		</Box>
+	);
+
 	return (
-		<React.Fragment>
+		<Fragment>
 			<Grid
 				container
 				direction='column'
-				justifyContent='top'
+				justifyContent='center'
 				alignItems='center'
 			>
-				<section className='home-page-head'>
-					<h1>Parks 4ME</h1>
-					<p>
-						Parks 4ME helps you plan your next National Park adventure.
-						<br />
-						Browse through the comprehensive list of parks and historical sites.
-						<br />
-						See details about each park, and reviews that others have shared.
-						<br />
-						<b>
-							Sign up for an account to bookmark your favorite National Parks
-							and share your park reviews with others.
-						</b>
-					</p>
-				</section>
-				<div>
-					<ButtonGroup style={{ marginBottom: '10px' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'row' }}>
+					<ButtonGroup style={{ marginBottom: '10px', marginTop: '25px' }}>
 						<Button
 							variant='contained'
 							className='change-results'
 							onClick={firstTwenty}
-							disabled={start < 20}
+							disabled={page < 1}
 						>
 							First 20
 						</Button>
@@ -157,7 +189,7 @@ export default function HomePage({ token }) {
 							variant='contained'
 							className='change-results'
 							onClick={previousTwenty}
-							disabled={start < 20}
+							disabled={page < 1}
 						>
 							Previous 20
 						</Button>
@@ -170,7 +202,14 @@ export default function HomePage({ token }) {
 							Next 20
 						</Button>
 					</ButtonGroup>
-					<form onSubmit={submitPark}>
+					<form
+						onSubmit={submitPark}
+						style={{
+							marginBottom: '10px',
+							marginTop: '25px',
+							marginLeft: '15px',
+						}}
+					>
 						<label>
 							<TextField
 								id='outlined-basic'
@@ -183,81 +222,81 @@ export default function HomePage({ token }) {
 							/>
 						</label>
 						<Button type='submit' variant='contained'>
-							{' '}
-							Find Park{' '}
+							Find Park
 						</Button>
+						{token && (
+							<Button
+								variant={favoriteView ? 'contained' : 'text'}
+								onClick={handleFavoriteView}
+							>
+								Favorites
+							</Button>
+						)}
 					</form>
-				</div>
-				<div>
-					<br />
-					{isLoading ? (
-						<Spinner />
-					) : (
-						<Grid
-							container
-							direction='row'
-							justifyContent='space-evenly'
-							alignItems='top'
-						>
-							{parks.map((park) => (
-								<Card
-									key={park.parkCode}
-									style={{
-										display: 'flex',
-										justifyContent: 'space-between',
-										flexDirection: 'column',
-										marginBottom: '10px',
-										marginTop: '10px',
-									}}
-									sx={{ maxWidth: 345 }}
-								>
-									<CardActionArea href={`/park/${park.parkCode}`}>
+				</Box>
+				<br />
+				{isLoading ? (
+					<Spinner />
+				) : (
+					<Grid
+						container
+						direction='row'
+						justifyContent='space-evenly'
+						alignItems='top'
+					>
+						{parks.map((park) => (
+							/////////////CARD START //////////////////////
+							<Card
+								key={park.parkCode}
+								sx={{
+									position: 'relative',
+									display: 'flex',
+									// justifyContent: 'space-between',
+									flexdirection: 'column',
+									marginBottom: '40px',
+									marginLeft: '5px',
+									marginRight: '5px',
+									maxHeight: '400px',
+									alignItems: 'flex-start',
+									width: '350px',
+									maxWidth: '350px',
+								}}
+							>
+								<CardActionArea>
+									<Link
+										component={RouterLink}
+										to={`/park/${park.parkCode}`}
+										underline='none'
+										variant='body2'
+									>
 										<CardMedia
 											component='img'
-											height='140'
-											image={park.images[0].url}
+											height='250px'
+											width='350px'
+											image={park.images[0].url + '?width=350'}
 											alt={park.fullname}
+											sx={{
+												loading: 'lazy',
+												objectPosition: 'top',
+											}}
 										/>
 										<CardContent>
-											<Typography gutterBottom variant='h5' component='div'>
+											<Typography
+												sx={{ width: '90%' }}
+												variant='h5'
+												component='div'
+											>
 												{park.fullName}
 											</Typography>
-											<Typography variant='body2' color='text.secondary'>
-												{park.description}
-											</Typography>
 										</CardContent>
-										{/* <div style = {{height: 100}}></div> */}
-									</CardActionArea>
-									{token && (
-										<CardActions>
-											<Tooltip title='Add/Remove Favorites' placement='right'>
-												{isFavorite(park, favorites) ? (
-													<IconButton
-														size='large'
-														color='error'
-														aria-label='add to favorites'
-														onClick={() => handleRemove(park.parkCode)}
-													>
-														{/* <FavoriteIcon /> */}
-													</IconButton>
-												) : (
-													<IconButton
-														size='large'
-														aria-label='add to favorites'
-														onClick={() => handleFavorite(park)}
-													>
-														{/* <FavoriteIcon /> */}
-													</IconButton>
-												)}
-											</Tooltip>
-										</CardActions>
-									)}
-								</Card>
-							))}
-						</Grid>
-					)}
-				</div>
+									</Link>
+								</CardActionArea>
+								{token && favoriteHeart(park)}
+							</Card>
+						))}
+					</Grid>
+				)}
 			</Grid>
-		</React.Fragment>
+		</Fragment>
 	);
 }
