@@ -23,7 +23,7 @@ export default function LandingPage() {
 				}}
 				witdh='13vw'
 			>
-				<Typography>
+				<Typography sx={{ textShadow: '#000 1px 0 10px' }}>
 					<Typography variant='h2'>Parks 4ME</Typography>
 					<Typography fontWeight='bold' sx={{ fontSize: '1.75em' }}>
 						<br />

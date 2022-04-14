@@ -55,3 +55,9 @@ export async function removeFavorite(parkCode, token) {
 
 	return response.body.data;
 }
+
+export function hasActivity(park, parksWithActivity) {
+	return !!parksWithActivity.find((parkWithActivity) => {
+		return parkWithActivity.parkCode === park.parkCode;
+	});
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import request from 'superagent';
 // import { Link } from 'react-router-dom'
-import { isFavorite } from './Utils.js';
+import { hasActivity, isFavorite } from './Utils.js';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
@@ -20,6 +20,8 @@ import Spinner from './Spinner.js';
 import { red } from '@mui/material/colors';
 import { usePagination } from './PaginationContext.jsx';
 import { Link as RouterLink } from 'react-router-dom';
+import { Dropdown } from './components/Dropdown.jsx';
+import { ControlPanel } from './components/ControlPanel.jsx';
 
 // const URL = 'https://cryptic-dusk-44349.herokuapp.com';
 const URL = 'http://localhost:7890';
@@ -34,6 +36,10 @@ export default function Parks({ token }) {
 	// 	start: 0,
 	// 	isLoading: false,
 	// };
+	const [pageValue, setPageValue] = useState('20');
+	const [activityValue, setActivityValue] = useState('');
+	const [designation, setDesignation] = useState('');
+	const [stateValue, setStateValue] = useState('');
 	const [parks, setParks] = useState([]);
 	const [searchPark, setSearchPark] = useState('');
 	const [favorites, setFavorites] = useState([]);
@@ -87,11 +93,13 @@ export default function Parks({ token }) {
 			// const token = this.props.token;
 			const response = await request.get(
 				// `${URL}/parks?start=${this.state.start}`
-				`${URL}/parks?start=${page * 20}`
+				`${URL}/parks?start=${page * pageValue}&limit=${pageValue}
+				&activity=${activityValue}`
 				// `https://developer.nps.gov/api/v1/parks?limit=20&start=${
 				// 	page * 20
 				// }&api_key=FjbYuojCE0MpnrnD7PgAu9duwdWqxbSMT5eaWEGj`
 			);
+			setParks(response.body.data);
 			if (token) {
 				const favs = await request
 					.get(`${URL}/api/favorites`)
@@ -100,20 +108,26 @@ export default function Parks({ token }) {
 				setFavorites(favs.body);
 			}
 			// this.setState({ parks: response.body.data, isLoading: false });
-			if (favoriteView) {
+			if (favoriteView || activityValue) {
 				const allParks = await request.get(
 					`https://developer.nps.gov/api/v1/parks?limit=500&api_key=FjbYuojCE0MpnrnD7PgAu9duwdWqxbSMT5eaWEGj`
 				);
-				setParks(
-					allParks.body.data.filter((park) => isFavorite(park, favorites))
-				);
-			} else {
-				setParks(response.body.data);
+				if (favoriteView)
+					setParks(
+						allParks.body.data.filter((park) => isFavorite(park, favorites))
+					);
+				else
+					setParks(
+						allParks.body.data.filter((park) =>
+							hasActivity(park, response.body.data[0].parks)
+						)
+					);
 			}
+
 			setIsLoading(false);
 		};
 		getParks();
-	}, [page, token, favoriteView]);
+	}, [page, token, favoriteView, pageValue, activityValue]);
 
 	const nextTwenty = () => {
 		// await this.setState({ start: this.state.start + 20 });
@@ -175,65 +189,28 @@ export default function Parks({ token }) {
 				justifyContent='center'
 				alignItems='center'
 			>
-				<Box sx={{ display: 'flex', flexDirection: 'row' }}>
-					<ButtonGroup style={{ marginBottom: '10px', marginTop: '25px' }}>
-						<Button
-							variant='contained'
-							className='change-results'
-							onClick={firstTwenty}
-							disabled={page < 1}
-						>
-							First 20
-						</Button>
-						<Button
-							variant='contained'
-							className='change-results'
-							onClick={previousTwenty}
-							disabled={page < 1}
-						>
-							Previous 20
-						</Button>
-						<Button
-							variant='contained'
-							className='change-results'
-							onClick={nextTwenty}
-							disabled={parks.length < 20}
-						>
-							Next 20
-						</Button>
-					</ButtonGroup>
-					<form
-						onSubmit={submitPark}
-						style={{
-							marginBottom: '10px',
-							marginTop: '25px',
-							marginLeft: '15px',
-						}}
-					>
-						<label>
-							<TextField
-								id='outlined-basic'
-								label='Search By Name'
-								size='small'
-								variant='outlined'
-								type='text'
-								required
-								onChange={handleSearch}
-							/>
-						</label>
-						<Button type='submit' variant='contained'>
-							Find Park
-						</Button>
-						{token && (
-							<Button
-								variant={favoriteView ? 'contained' : 'text'}
-								onClick={handleFavoriteView}
-							>
-								Favorites
-							</Button>
-						)}
-					</form>
-				</Box>
+				<ControlPanel
+					{...{
+						firstTwenty,
+						page,
+						previousTwenty,
+						nextTwenty,
+						parks,
+						submitPark,
+						handleSearch,
+						token,
+						favoriteView,
+						handleFavoriteView,
+						activityValue,
+						setActivityValue,
+						stateValue,
+						setStateValue,
+						designation,
+						setDesignation,
+						pageValue,
+						setPageValue,
+					}}
+				/>
 				<br />
 				{isLoading ? (
 					<Spinner />

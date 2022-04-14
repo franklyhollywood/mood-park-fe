@@ -5,13 +5,15 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 // import { InputLabel } from '@material-ui/core';
 import Paper from '@mui/material/Paper';
-import { Container, Divider, Grid, Typography } from '@mui/material';
+import { Divider, Grid, Typography } from '@mui/material';
 import Rating from '@mui/material/Rating';
 import StarIcon from '@mui/icons-material/Star';
 // import { experimentalStyled as styled } from '@mui/material/styles';
 import { makeStyles } from '@material-ui/core/styles';
 // import clsx from 'clsx';
 import Link from '@mui/material/Link';
+import Modal from '@mui/material/Modal';
+// import { Input } from '@material-ui/core';
 
 // const testComments = [
 // 	{
@@ -43,6 +45,18 @@ import Link from '@mui/material/Link';
 //const URL = 'https://cryptic-dusk-44349.herokuapp.com';
 const URL = 'http://localhost:7890';
 
+const style = {
+	position: 'absolute',
+	top: '50%',
+	left: '50%',
+	transform: 'translate(-50%, -50%)',
+	width: 725,
+	bgcolor: 'background.paper',
+	border: '2px solid #000',
+	boxShadow: 24,
+	p: 4,
+};
+
 export default function DetailPage({ match, token }) {
 	const [park, setPark] = useState({
 		images: [{ url: '' }],
@@ -54,11 +68,14 @@ export default function DetailPage({ match, token }) {
 	const [comment, setComment] = useState('');
 	const [comments, setComments] = useState([]);
 	const [userId, setUserId] = useState('');
-	const [editing, setEditing] = useState(false);
+	// const [editing, setEditing] = useState(false);
 	const [commentId, setCommentId] = useState('');
-
-	const [ratingValue, setRatingValue] = useState(3);
+	const [editedComment, setEditedComment] = useState('');
+	const [ratingValue, setRatingValue] = useState(0);
 	const [ratingHover, setRatingHover] = useState(-1);
+	const [open, setOpen] = useState(false);
+	const handleOpen = () => setOpen(true);
+	const handleClose = () => setOpen(false);
 
 	const labels = {
 		0.5: 'Icky',
@@ -80,22 +97,21 @@ export default function DetailPage({ match, token }) {
 
 		setPark(response.body.data[0]);
 		if (token) {
-			const comments = await request
+			const allComments = await request
 				.get(`${URL}/api/comments/${parkCode}`)
 				.set('Authorization', token);
-			setComments(comments.body);
+			setComments(allComments.body);
 			// setComments(testComments);
-			const totalRatings = comments.body.reduce((prevValue, currValue) => {
+			const totalRatings = allComments.body.reduce((prevValue, currValue) => {
 				return prevValue + +currValue.rating;
 			}, 0);
 			const averageRating =
 				Math.round(
 					(totalRatings /
-						comments.body.filter((comment) => comment.rating).length) *
+						allComments.body.filter((comment) => comment.rating).length) *
 						2
 				) / 2;
 			setRatingValue(averageRating);
-			console.log({ totalRatings, averageRating });
 			const userID = localStorage.getItem('USER_ID');
 			setUserId(userID);
 		}
@@ -105,12 +121,12 @@ export default function DetailPage({ match, token }) {
 		fetchPark();
 	}, []);
 
-	const handleFavorite = async () => {
-		await request
-			.post(`${URL}/api/favorites`)
-			.send(park)
-			.set('Authorization', token);
-	};
+	// const handleFavorite = async () => {
+	// 	await request
+	// 		.post(`${URL}/api/favorites`)
+	// 		.send(park)
+	// 		.set('Authorization', token);
+	// };
 
 	const handleCommentSubmit = async (e) => {
 		e.preventDefault();
@@ -119,30 +135,31 @@ export default function DetailPage({ match, token }) {
 			.post(`${URL}/api/comments`)
 			.send({ comment, parkcode: parkCode, ratingValue: +ratingValue })
 			.set('Authorization', token);
-
+		setComment('');
+		setRatingValue(0);
 		await fetchPark();
 	};
 
-	const useStyles = makeStyles({
-		container: {
-			height: '100vh', // So that grids 1 & 4 go all the way down
-			minHeight: 150, // Give minimum height to a div
-			border: '1px solid black',
-			fontSize: 16,
-			textAlign: 'center',
-		},
-		containerTall: {
-			minHeight: 250, // This div has higher minimum height
-		},
-	});
+	// const useStyles = makeStyles({
+	// 	container: {
+	// 		height: '100vh', // So that grids 1 & 4 go all the way down
+	// 		minHeight: 150, // Give minimum height to a div
+	// 		border: '1px solid black',
+	// 		fontSize: 16,
+	// 		textAlign: 'center',
+	// 	},
+	// 	containerTall: {
+	// 		minHeight: 250, // This div has higher minimum height
+	// 	},
+	// });
 
-	const classes = useStyles();
+	// const classes = useStyles();
 
-	const handlePostEdit = async (commentId) => {
+	const handlePostEdit = (commentId) => {
 		const comment = comments.find((comment) => commentId === comment.id);
 
-		setComment(comment.comment);
-		setEditing(true);
+		setEditedComment(comment.comment);
+		// setEditing(true);
 		setCommentId(commentId);
 	};
 
@@ -151,10 +168,19 @@ export default function DetailPage({ match, token }) {
 
 		await request
 			.put(`${URL}/api/comments/${commentId}`)
-			.send({ comment })
+			.send({ comment: editedComment })
 			.set('Authorization', token);
 
-		setEditing(false);
+		// setEditing(false);
+		await fetchPark();
+		handleClose();
+	};
+
+	const handleDeletePost = async (commentId) => {
+		await request
+			.delete(`${URL}/api/comments/${commentId}`)
+			.set('Authorization', token);
+
 		await fetchPark();
 	};
 
@@ -246,9 +272,7 @@ export default function DetailPage({ match, token }) {
 						<Box overflow='auto' maxHeight='85%'>
 							<Box>
 								{token && (
-									<form
-										onSubmit={editing ? handleEditSubmit : handleCommentSubmit}
-									>
+									<form onSubmit={handleCommentSubmit}>
 										<Grid
 											container
 											direction='row'
@@ -325,7 +349,7 @@ export default function DetailPage({ match, token }) {
 												alignItems='center'
 												justifyContent='center'
 											>
-												{editing ? (
+												{/* {editing ? (
 													<Button
 														variant='contained'
 														type='submit'
@@ -333,15 +357,15 @@ export default function DetailPage({ match, token }) {
 													>
 														Edit
 													</Button>
-												) : (
-													<Button
-														variant='contained'
-														type='submit'
-														sx={{ marginTop: '15px' }}
-													>
-														Post
-													</Button>
-												)}
+												) : ( */}
+												<Button
+													variant='contained'
+													type='submit'
+													sx={{ marginTop: '15px' }}
+												>
+													Post
+												</Button>
+												{/* )} */}
 											</Grid>
 										</Paper>
 									</form>
@@ -357,17 +381,20 @@ export default function DetailPage({ match, token }) {
 													<Typography>
 														'{comment.comment}' <br />
 													</Typography>
-													<Rating
-														name='hover-feedback'
-														value={comment.rating}
-														precision={0.5}
-														emptyIcon={
-															<StarIcon
-																style={{ opacity: 0.55 }}
-																fontSize='inherit'
-															/>
-														}
-													/>
+													{comment.rating > 0 && (
+														<Rating
+															name='hover-feedback'
+															readOnly
+															value={comment.rating}
+															precision={0.5}
+															emptyIcon={
+																<StarIcon
+																	style={{ opacity: 0.55 }}
+																	fontSize='inherit'
+																/>
+															}
+														/>
+													)}
 
 													<Typography
 														style={{ fontSize: '.8rem', fontStyle: 'Italic' }}
@@ -384,17 +411,68 @@ export default function DetailPage({ match, token }) {
 													</Typography>
 
 													{comment.owner_id === Number(userId) && (
-														<Button
-															size='small'
-															onClick={() => handlePostEdit(comment.id)}
-														>
-															Edit post
-														</Button>
+														<>
+															<Button
+																size='small'
+																onClick={function () {
+																	handlePostEdit(comment.id);
+																	handleOpen();
+																}}
+															>
+																Edit post
+															</Button>
+															<Button
+																size='small'
+																onClick={function () {
+																	handleDeletePost(comment.id);
+																}}
+															>
+																Delete
+															</Button>
+														</>
 													)}
 													<Divider />
 												</Box>
 											);
 										})}
+									<div>
+										{/* <Button onClick={handleOpen}>Open modal</Button> */}
+										<Modal
+											open={open}
+											onClose={handleClose}
+											aria-labelledby='modal-modal-title'
+											aria-describedby='modal-modal-description'
+										>
+											<Box sx={style}>
+												<Typography
+													id='modal-modal-title'
+													variant='h6'
+													component='h2'
+												>
+													Edit post:
+												</Typography>
+												<TextField
+													style={{ width: '650px' }}
+													multiline={true}
+													rows={3}
+													id='Comment'
+													variant='outlined'
+													value={editedComment}
+													onChange={(e) => setEditedComment(e.target.value)}
+												/>
+
+												{/* <Typography id='modal-modal-description' sx={{ mt: 2 }}>
+													Duis mollis, est non commodo luctus, nisi erat
+													porttitor ligula.
+												</Typography> */}
+
+												<br />
+												<br />
+												<Button onClick={handleEditSubmit}>Ok</Button>
+												<Button onClick={handleClose}>Cancel</Button>
+											</Box>
+										</Modal>
+									</div>
 								</Paper>
 							</Box>
 						</Box>
