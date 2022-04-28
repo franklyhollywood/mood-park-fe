@@ -180,7 +180,7 @@ export default function DetailPage({ match, token }) {
 		await request
 			.delete(`${URL}/api/comments/${commentId}`)
 			.set('Authorization', token);
-
+		// setTimeout(() => fetchPark(), 1500);
 		await fetchPark();
 	};
 
@@ -230,14 +230,14 @@ export default function DetailPage({ match, token }) {
 					</Box>
 
 					<Box maxWidth='300px' ml={5}>
-						<Typography mb='10px'>
-							<Paper elevation={5}>
+						<Paper elevation={5}>
+							<Typography mb='10px'>
 								National Parks site:{' '}
 								<Link href={park.url} underline='hover'>
 									{park.url}
 								</Link>
-							</Paper>
-						</Typography>
+							</Typography>
+						</Paper>
 					</Box>
 				</Grid>
 				<Grid container direction='row' spacing={2}>
@@ -248,13 +248,13 @@ export default function DetailPage({ match, token }) {
 							</Paper>
 						</Box>
 					</Grid>
-					<Grid container direction='column' xs spacing={2} height='100vh'>
+					<Grid container direction='column' item xs spacing={2} height='100vh'>
 						<Grid item xs>
 							<Box overflow='auto' maxHeight='85%'>
 								<Paper elevation={3}>
 									<h2>Activities:</h2>
 									{park.activities.map((activity) => (
-										<Box ml='25px'>
+										<Box ml='25px' key={activity.name}>
 											{/* <Grid
 												container
 												direction='row'
@@ -298,6 +298,7 @@ export default function DetailPage({ match, token }) {
 												>
 													<Rating
 														name='hover-feedback'
+														defaultValue={3.5}
 														value={ratingValue}
 														precision={0.5}
 														onChange={(event, newValue) => {
@@ -377,7 +378,7 @@ export default function DetailPage({ match, token }) {
 										.sort((a, b) => b.park_timestamp - a.park_timestamp)
 										.map((comment) => {
 											return (
-												<Box sx={{ marginLeft: '10px' }}>
+												<Box sx={{ marginLeft: '10px' }} key={comment.id}>
 													<Typography>
 														'{comment.comment}' <br />
 													</Typography>
@@ -385,7 +386,7 @@ export default function DetailPage({ match, token }) {
 														<Rating
 															name='hover-feedback'
 															readOnly
-															value={comment.rating}
+															value={Number(comment.rating)}
 															precision={0.5}
 															emptyIcon={
 																<StarIcon
@@ -395,7 +396,6 @@ export default function DetailPage({ match, token }) {
 															}
 														/>
 													)}
-
 													<Typography
 														style={{ fontSize: '.8rem', fontStyle: 'Italic' }}
 													>
@@ -409,7 +409,6 @@ export default function DetailPage({ match, token }) {
 													>
 														User {comment.owner_id}{' '}
 													</Typography>
-
 													{comment.owner_id === Number(userId) && (
 														<>
 															<Button

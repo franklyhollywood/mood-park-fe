@@ -29,6 +29,7 @@ export default function AboutUs() {
 				>
 					{creators.map((creator) => (
 						<Card
+							key={creator.name}
 							sx={{
 								maxWidth: 345,
 								minWidth: 345,
@@ -47,8 +48,9 @@ export default function AboutUs() {
 										{creator.name}
 									</Typography>
 									<Typography variant='body2' color='text.secondary'>
-										<p>{creator.bio}</p>
-										<p>{creator.park}</p>
+										{creator.bio}
+										<br />
+										{creator.park}
 									</Typography>
 								</CardContent>
 							</CardActionArea>
