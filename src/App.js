@@ -1,55 +1,84 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import HomePage from './HomePage.js';
-
-import Menu from './Menu.js';
-import DetailPage from './DetailPage.js';
-import './App.css';
-import Navigation from './Navigation.js';
+import HomePage from './Parks.js';
+import DetailPage2 from './DetailPage2.js';
 import Favorites from './Favorites.js';
 import LogIn from './LogIn.js';
 import SignUp from './SignUp.js';
-import Cards from './Cards.js';
-import Cards2 from './Cards2.js';
-import Menu2 from './Menu2.js';
 import AboutUs from './AboutUs.js';
 import { Redirect } from 'react-router-dom';
+import Menu3 from './Menu3.js';
+import DetailPage from './DetailPage.jsx';
+import LandingPage from './LandingPage.jsx';
+import Parks from './Parks.js';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { green, red } from '@mui/material/colors';
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
+import { PaginationContextProvider } from './PaginationContext.jsx';
 
 const TOKEN_KEY = 'TOKEN';
+const USER_ID_KEY = 'USER_ID';
 
-export default class App extends Component {
-	state = {
-		token: localStorage.getItem(TOKEN_KEY) || '',
-	};
+const theme = createTheme({
+	palette: {
+		primary: {
+			main: green[700],
+		},
+		secondary: {
+			main: red[500],
+		},
+	},
+});
 
-	tokenToLocalStorage = (token) => {
+export default function App() {
+	const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY) || '');
+	// state = {
+	// 	token: localStorage.getItem(TOKEN_KEY) || '',
+	// };
+
+	const tokenToLocalStorage = (token) => {
 		localStorage.setItem(TOKEN_KEY, token);
-		this.setState({ token: token });
+		//this.setState({token: token})
+		setToken(token);
 	};
 
-	logout = () => {
+	const userIdToLocalStorage = (userId) => {
+		localStorage.setItem(USER_ID_KEY, userId);
+	};
+
+	const logout = () => {
 		localStorage.clear();
-		this.setState({ token: '' });
+		//this.setState({token: ''})
+		setToken('');
+		window.location.assign('/');
 	};
-
-	render() {
-		return (
-			<div>
+	return (
+		<ThemeProvider theme={theme}>
+			<PaginationContextProvider>
 				<Router>
-					<Menu token={this.state.token} logout={this.logout} />
+					{/* <Navigation token={this.state.token} logout={this.logout} /> */}
+					<Menu3 token={token} logout={logout} />
 					<Switch>
 						<Route
 							path='/'
 							exact
 							render={(routerProps) => (
-								<HomePage token={this.state.token} {...routerProps} />
+								<LandingPage token={token} {...routerProps} />
 							)}
+						/>
+						<Route
+							path='/parks'
+							exact
+							render={(routerProps) => <Parks token={token} {...routerProps} />}
 						/>
 						<Route
 							path='/park/:parkCode'
 							exact
 							render={(routerProps) => (
-								<DetailPage token={this.state.token} {...routerProps} />
+								<DetailPage token={token} {...routerProps} />
 							)}
 						/>
 						<Route
@@ -57,7 +86,7 @@ export default class App extends Component {
 							exact
 							render={(routerProps) => (
 								<LogIn
-									tokenToLocalStorage={this.tokenToLocalStorage}
+									tokenToLocalStorage={tokenToLocalStorage}
 									{...routerProps}
 								/>
 							)}
@@ -67,7 +96,8 @@ export default class App extends Component {
 							exact
 							render={(routerProps) => (
 								<SignUp
-									tokenToLocalStorage={this.tokenToLocalStorage}
+									tokenToLocalStorage={tokenToLocalStorage}
+									userIdToLocalStorage={userIdToLocalStorage}
 									{...routerProps}
 								/>
 							)}
@@ -76,8 +106,8 @@ export default class App extends Component {
 							path='/favorites'
 							exact
 							render={(routerProps) =>
-								this.state.token ? (
-									<Favorites token={this.state.token} {...routerProps} />
+								token ? (
+									<Favorites token={token} {...routerProps} />
 								) : (
 									<Redirect to='/' />
 								)
@@ -88,36 +118,9 @@ export default class App extends Component {
 							exact
 							render={(routerProps) => <AboutUs {...routerProps} />}
 						/>
-						<Route
-							path='/Cards'
-							exact
-							render={(routerProps) => <Cards {...routerProps} />}
-						/>
-						<Route
-							path='/Cards2'
-							exact
-							render={(routerProps) => <Cards2 {...routerProps} />}
-						/>
-						<Route
-							path='/Menu'
-							exact
-							render={(routerProps) => (
-								<Menu
-									token={this.state.token}
-									logout={this.logout}
-									{...routerProps}
-								/>
-							)}
-						/>
-
-						<Route
-							path='/Menu2'
-							exact
-							render={(routerProps) => <Menu2 {...routerProps} />}
-						/>
 					</Switch>
 				</Router>
-			</div>
-		);
-	}
+			</PaginationContextProvider>
+		</ThemeProvider>
+	);
 }
