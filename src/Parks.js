@@ -22,6 +22,7 @@ import { usePagination } from './PaginationContext.jsx';
 import { Link as RouterLink } from 'react-router-dom';
 import { Dropdown } from './components/Dropdown.jsx';
 import { ControlPanel } from './components/ControlPanel.jsx';
+import fallBackImage from './images/lake.jpeg';
 
 // const URL = 'https://cryptic-dusk-44349.herokuapp.com';
 const URL = 'http://localhost:7890';
@@ -181,6 +182,8 @@ export default function Parks({ token }) {
 		</Box>
 	);
 
+	const onMediaFallBack = (e) => (e.target.src = fallBackImage);
+
 	return (
 		<Fragment>
 			<Grid
@@ -250,8 +253,9 @@ export default function Parks({ token }) {
 											component='img'
 											height='250px'
 											width='350px'
-											image={park.images[0].url + '?width=350'}
+											src={park.images[0].url + '?width=350'}
 											alt={park.fullname}
+											onError={onMediaFallBack}
 											sx={{
 												loading: 'lazy',
 												objectPosition: 'top',
